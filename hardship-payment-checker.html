@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hardship Payment Eligibility Checker</title>
+<style>
+body{font-family:Arial,sans-serif;max-width:1150px;margin:auto;padding:30px;background:#f4f6f8;color:#111}
+h1,h2{color:#003078}
+.notice{background:#fff3cd;border-left:5px solid #ffbf47;padding:15px;margin:20px 0}
+.container{display:grid;grid-template-columns:1fr 1fr;gap:25px}
+.card{background:white;padding:20px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+label{display:block;margin-top:15px;margin-bottom:5px;font-weight:bold}
+select{width:100%;padding:10px;border:1px solid #bbb;border-radius:5px;font-size:16px}
+.check{padding:12px;margin-bottom:10px;border-radius:5px;font-weight:bold}
+.pass{background:#d4edda;color:#155724}
+.fail{background:#f8d7da;color:#721c24}
+.pending{background:#e2e3e5;color:#383d41}
+.hidden{display:none}
+#finalResult{margin-top:25px;padding:22px;font-size:24px;text-align:center;font-weight:bold;border-radius:10px}
+.green{background:#d4edda;color:#155724}
+.red{background:#f8d7da;color:#721c24}
+#explanationPanel{margin-top:15px;padding:18px;border-radius:10px;background:white;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+#failedReasons li{margin-bottom:8px}
+button{padding:11px 16px;margin:10px 6px 0 0;cursor:pointer;border:none;border-radius:5px;background:#003078;color:white;font-weight:bold}
+button:hover{opacity:.9}
+textarea{width:100%;margin-top:15px;padding:15px;font-family:Arial,sans-serif;display:none;min-height:260px;box-sizing:border-box}
+.footer{margin-top:20px;font-size:14px;color:#555}
+@media(max-width:850px){.container{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<h1>Hardship Payment Eligibility Checker</h1>
+<p><strong>Universal Credit hardship payment screening tool</strong></p>
+
+<div class="notice">
+<strong>Important:</strong> This tool provides an indication of potential eligibility only. It does not replace a formal DWP decision. Hardship payments may need to be repaid through deductions from future Universal Credit payments.
+</div>
+
+<div class="container">
+<div class="card">
+<h2>Claimant Questions</h2>
+
+<label>Reason for hardship payment request</label>
+<select id="reason">
+<option value="">Select</option>
+<option value="sanction">Sanction</option>
+<option value="fraud">Fraud penalty</option>
+</select>
+
+<label>Has the claimant reduced their non-essential costs?</label>
+<select id="reducedCosts">
+<option value="">Select</option>
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Has the claimant looked into other ways to get support?</label>
+<select id="otherSupport">
+<option value="">Select</option>
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Can the claimant prove they need the support?</label>
+<select id="proveNeed">
+<option value="">Select</option>
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Is the claimant part of a couple?</label>
+<select id="couple">
+<option value="">Select</option>
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<div id="partnerAgreementSection" class="hidden">
+<label>Has the partner agreed to getting a hardship payment?</label>
+<select id="partnerAgreement">
+<option value="">Select</option>
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+</div>
+
+<label>Has the claimant had a lower or missed Universal Credit payment because of the sanction or penalty?</label>
+<select id="lowerPayment">
+<option value="">Select</option>
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label id="sanctionLevelLabel">Was the sanction or penalty at the required level?</label>
+<select id="sanctionLevel">
+<option value="">Select</option>
+<option value="yes">Yes - 100% standard allowance, or 50%+ for a couple</option>
+<option value="no">No</option>
+</select>
+
+<label>Have the claimant and partner, if applicable, completed their work-related requirements in the 7 days before applying?</label>
+<select id="workRequirements">
+<option value="">Select</option>
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Have they completed any activity required to end the sanction, also known as a compliance condition?</label>
+<select id="complianceCondition">
+<option value="">Select</option>
+<option value="yes">Yes</option>
+<option value="no">No</option>
+<option value="na">Not applicable / no compliance condition given</option>
+</select>
+</div>
+
+<div class="card">
+<h2>Eligibility Checks</h2>
+<div id="checkReason" class="check pending">Awaiting reason for request</div>
+<div id="checkReducedCosts" class="check pending">Awaiting information</div>
+<div id="checkOtherSupport" class="check pending">Awaiting information</div>
+<div id="checkProveNeed" class="check pending">Awaiting information</div>
+<div id="checkCouple" class="check pending">Awaiting couple status</div>
+<div id="checkPartnerAgreement" class="check pending hidden">Awaiting partner agreement</div>
+<div id="checkLowerPayment" class="check pending">Awaiting payment information</div>
+<div id="checkSanctionLevel" class="check pending">Awaiting sanction or penalty level</div>
+<div id="checkWorkRequirements" class="check pending">Awaiting work-related requirements information</div>
+<div id="checkComplianceCondition" class="check pending">Awaiting compliance condition information</div>
+</div>
+</div>
+
+<div id="finalResult" class="pending">Complete the questions above.</div>
+
+<div id="explanationPanel">
+<h2>Decision Explanation</h2>
+<p id="explanationText">Answer the questions above to see why the claimant may or may not be eligible.</p>
+<ul id="failedReasons"></ul>
+</div>
+
+<button onclick="generateSummary()">Generate Claimant Summary</button>
+<button onclick="copySummary()">Copy Summary</button>
+<button onclick="printSummary()">Print</button>
+<button onclick="downloadSummary()">Download TXT</button>
+
+<textarea id="summaryOutput" rows="14"></textarea>
+
+<div class="footer">
+This checker is designed as a work-coach support tool for structured conversations. It should not be treated as an official entitlement decision.
+</div>
+
+<script>
+function value(id){return document.getElementById(id).value;}
+function textFor(id){const s=document.getElementById(id);return s.options[s.selectedIndex]?s.options[s.selectedIndex].text:"";}
+function setCheck(id,status,text){
+ const box=document.getElementById(id);
+ box.className="check "+status;
+ box.innerHTML=(status==="pass"?"✔ ":status==="fail"?"✖ ":"")+text;
+}
+function showOrHideCoupleQuestion(){
+ const c=value("couple");
+ const section=document.getElementById("partnerAgreementSection");
+ const check=document.getElementById("checkPartnerAgreement");
+ if(c==="yes"){section.classList.remove("hidden");check.classList.remove("hidden");}
+ else{section.classList.add("hidden");check.classList.add("hidden");document.getElementById("partnerAgreement").value="";}
+}
+function updateReasonLabel(){
+ const r=value("reason");
+ const label=document.getElementById("sanctionLevelLabel");
+ if(r==="fraud") label.innerText="Was the fraud penalty at the required level?";
+ else if(r==="sanction") label.innerText="Was the sanction at the required level?";
+ else label.innerText="Was the sanction or penalty at the required level?";
+}
+function evaluate(){
+ showOrHideCoupleQuestion();
+ updateReasonLabel();
+ let eligible=true, complete=true, failures=[];
+ const reason=value("reason"), reducedCosts=value("reducedCosts"), otherSupport=value("otherSupport"), proveNeed=value("proveNeed");
+ const couple=value("couple"), partnerAgreement=value("partnerAgreement"), lowerPayment=value("lowerPayment"), sanctionLevel=value("sanctionLevel");
+ const workRequirements=value("workRequirements"), complianceCondition=value("complianceCondition");
+
+ if(reason===""){setCheck("checkReason","pending","Reason for request not completed");complete=false;}
+ else setCheck("checkReason","pass","Reason identified: "+textFor("reason"));
+
+ if(reducedCosts===""){setCheck("checkReducedCosts","pending","Reduced non-essential costs not completed");complete=false;}
+ else if(reducedCosts==="yes") setCheck("checkReducedCosts","pass","Claimant has reduced non-essential costs");
+ else{setCheck("checkReducedCosts","fail","Claimant has not reduced non-essential costs");eligible=false;failures.push("Claimant has not reduced their non-essential costs.");}
+
+ if(otherSupport===""){setCheck("checkOtherSupport","pending","Alternative support question not completed");complete=false;}
+ else if(otherSupport==="yes") setCheck("checkOtherSupport","pass","Other support options have been explored");
+ else{setCheck("checkOtherSupport","fail","Other ways to get support have not been explored");eligible=false;failures.push("Claimant has not looked into other ways to get support.");}
+
+ if(proveNeed===""){setCheck("checkProveNeed","pending","Evidence of need question not completed");complete=false;}
+ else if(proveNeed==="yes") setCheck("checkProveNeed","pass","Claimant can prove they need the support");
+ else{setCheck("checkProveNeed","fail","Claimant cannot currently prove they need the support");eligible=false;failures.push("Claimant cannot currently prove they need the support.");}
+
+ if(couple===""){setCheck("checkCouple","pending","Couple status not completed");complete=false;}
+ else if(couple==="yes"){
+   setCheck("checkCouple","pass","Claimant is part of a couple");
+   if(partnerAgreement===""){setCheck("checkPartnerAgreement","pending","Partner agreement not completed");complete=false;}
+   else if(partnerAgreement==="yes") setCheck("checkPartnerAgreement","pass","Partner has agreed to the hardship payment");
+   else{setCheck("checkPartnerAgreement","fail","Partner has not agreed to the hardship payment");eligible=false;failures.push("Partner agreement is required for a couple claim.");}
+ } else setCheck("checkCouple","pass","Claimant is not part of a couple");
+
+ if(lowerPayment===""){setCheck("checkLowerPayment","pending","Lower or missed UC payment question not completed");complete=false;}
+ else if(lowerPayment==="yes") setCheck("checkLowerPayment","pass","Lower or missed UC payment has happened");
+ else{setCheck("checkLowerPayment","fail","Claimant has not yet had a lower or missed UC payment");eligible=false;failures.push("Claimant can only apply once they have had a lower or missed Universal Credit payment because of the sanction or penalty.");}
+
+ if(sanctionLevel===""){setCheck("checkSanctionLevel","pending","Required sanction or penalty level not completed");complete=false;}
+ else if(sanctionLevel==="yes") setCheck("checkSanctionLevel","pass","Sanction or penalty level requirement met");
+ else{setCheck("checkSanctionLevel","fail","Sanction or penalty level requirement not met");eligible=false;failures.push("Sanction or penalty level does not meet the required threshold.");}
+
+ if(workRequirements===""){setCheck("checkWorkRequirements","pending","Work-related requirements question not completed");complete=false;}
+ else if(workRequirements==="yes") setCheck("checkWorkRequirements","pass","Work-related requirements completed in the 7 days before applying");
+ else{setCheck("checkWorkRequirements","fail","Work-related requirements not completed in the 7 days before applying");eligible=false;failures.push("Work-related requirements were not completed in the 7 days before applying.");}
+
+ if(complianceCondition===""){setCheck("checkComplianceCondition","pending","Compliance condition question not completed");complete=false;}
+ else if(complianceCondition==="yes") setCheck("checkComplianceCondition","pass","Compliance condition completed");
+ else if(complianceCondition==="na") setCheck("checkComplianceCondition","pass","No compliance condition applies");
+ else{setCheck("checkComplianceCondition","fail","Compliance condition not completed");eligible=false;failures.push("Compliance condition has not been completed.");}
+
+ const final=document.getElementById("finalResult"), explanationText=document.getElementById("explanationText"), failedReasons=document.getElementById("failedReasons");
+ failedReasons.innerHTML="";
+ if(!complete){
+   final.className="pending"; final.innerHTML="Please complete all required questions.";
+   explanationText.innerText="Some required answers are missing. Complete the outstanding questions to receive a final indication.";
+   return;
+ }
+ if(eligible){
+   final.className="green"; final.innerHTML="✅ POTENTIALLY ELIGIBLE FOR HARDSHIP PAYMENT";
+   explanationText.innerText="All required checks have been satisfied based on the information provided.";
+ } else {
+   final.className="red"; final.innerHTML="❌ APPEARS NOT ELIGIBLE FOR HARDSHIP PAYMENT";
+   explanationText.innerText="The claimant does not appear eligible based on the following failed condition(s):";
+   failures.forEach(function(reason){const li=document.createElement("li");li.innerText="✖ "+reason;failedReasons.appendChild(li);});
+ }
+}
+function yesNo(id){
+ const v=value(id);
+ if(v==="yes") return "Yes";
+ if(v==="no") return "No";
+ if(v==="na") return "Not applicable";
+ return "Not answered";
+}
+function generateSummary(){
+ evaluate();
+ const summary=[];
+ summary.push("HARDSHIP PAYMENT SCREENING");
+ summary.push("------------------------------------------");
+ summary.push("");
+ summary.push("Date of screening: "+new Date().toLocaleDateString("en-GB"));
+ summary.push("");
+ summary.push("Reason for hardship payment request: "+(textFor("reason")||"Not answered"));
+ summary.push("Reduced non-essential costs: "+yesNo("reducedCosts"));
+ summary.push("Other support options explored: "+yesNo("otherSupport"));
+ summary.push("Can prove need for support: "+yesNo("proveNeed"));
+ summary.push("Part of a couple: "+yesNo("couple"));
+ if(value("couple")==="yes") summary.push("Partner agreed to hardship payment: "+yesNo("partnerAgreement"));
+ summary.push("Lower or missed UC payment already received due to sanction/penalty: "+yesNo("lowerPayment"));
+ summary.push("Sanction/penalty level requirement met: "+yesNo("sanctionLevel"));
+ summary.push("Work-related requirements completed in 7 days before applying: "+yesNo("workRequirements"));
+ summary.push("Compliance condition completed: "+yesNo("complianceCondition"));
+ summary.push("");
+ summary.push("Outcome:");
+ summary.push(document.getElementById("finalResult").innerText);
+ summary.push("");
+ summary.push("Decision explanation:");
+ summary.push(document.getElementById("explanationText").innerText);
+ document.querySelectorAll("#failedReasons li").forEach(function(item){summary.push(item.innerText);});
+ summary.push("");
+ summary.push("Note:");
+ summary.push("This screening provides an indication only and does not replace a formal DWP decision.");
+ summary.push("Hardship payments may need to be repaid through deductions from future Universal Credit payments.");
+ const box=document.getElementById("summaryOutput");
+ box.style.display="block";
+ box.value=summary.join("\n");
+}
+function copySummary(){
+ const box=document.getElementById("summaryOutput");
+ if(box.value.trim()==="") generateSummary();
+ navigator.clipboard.writeText(box.value);
+ alert("Summary copied to clipboard.");
+}
+function printSummary(){
+ const box=document.getElementById("summaryOutput");
+ if(box.value.trim()==="") generateSummary();
+ const win=window.open("");
+ win.document.write("<pre style='font-family:Arial,sans-serif;white-space:pre-wrap;'>"+box.value+"</pre>");
+ win.document.close();
+ win.print();
+}
+function downloadSummary(){
+ const box=document.getElementById("summaryOutput");
+ if(box.value.trim()==="") generateSummary();
+ const blob=new Blob([box.value],{type:"text/plain"});
+ const link=document.createElement("a");
+ link.href=URL.createObjectURL(blob);
+ link.download="Hardship_Payment_Summary.txt";
+ link.click();
+}
+document.addEventListener("DOMContentLoaded",function(){
+ document.querySelectorAll("select").forEach(function(select){select.addEventListener("change",evaluate);});
+ evaluate();
+});
+</script>
+</body>
+</html>
