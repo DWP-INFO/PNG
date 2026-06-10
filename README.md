@@ -1,1 +1,3 @@
-Hi work coaches! Here you can find the latest versions of flyers regarding DWP benefits and offers to either print off and give to claimants or to send as an attachment. 
+Here you can find the latest versions of flyers and eligibility tools regarding DWP benefits and offers. Feel free to provide feedback!
+Hi Kyle!
+Hi Amy!
