@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Funeral Expenses Payment Eligibility Checker</title>
+<style>
+body{font-family:Arial,sans-serif;max-width:1100px;margin:auto;padding:30px;background:#f4f6f8}
+h1{color:#003078}
+.notice{background:#fff3cd;border-left:5px solid #ffbf47;padding:15px;margin-bottom:25px}
+.container{display:grid;grid-template-columns:1fr 1fr;gap:25px}
+.card{background:#fff;padding:20px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+label{display:block;margin-top:15px;margin-bottom:5px;font-weight:bold}
+select{width:100%;padding:10px;border:1px solid #ccc;border-radius:5px}
+.check{padding:12px;margin-bottom:10px;border-radius:5px;font-weight:bold}
+.pass{background:#d4edda;color:#155724}
+.fail{background:#f8d7da;color:#721c24}
+.pending{background:#e2e3e5;color:#383d41}
+#finalResult{margin-top:25px;padding:20px;font-size:24px;text-align:center;font-weight:bold;border-radius:10px}
+.green{background:#d4edda;color:#155724}
+.red{background:#f8d7da;color:#721c24}
+button{padding:10px 15px;margin:10px 5px 0 0;cursor:pointer}
+textarea{width:100%;margin-top:15px;padding:15px;font-family:Arial;display:none}
+.footer{margin-top:20px;font-size:14px;color:#555}
+@media(max-width:800px){.container{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<h1>Funeral Expenses Payment Eligibility Checker</h1>
+
+<div class="notice">
+This tool provides an indication of potential eligibility only. Final entitlement decisions are made by the relevant decision maker.
+</div>
+
+<div class="container">
+<div class="card">
+<label>Claim submitted within 6 months of the funeral?</label>
+<select id="months">
+<option value="">Select</option>
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Relationship to deceased</label>
+<select id="relationship">
+<option value="">Select</option>
+<option value="partner">Partner</option>
+<option value="relative">Close Relative</option>
+<option value="friend">Close Friend</option>
+<option value="stillborn">Parent of stillborn baby (24+ weeks)</option>
+<option value="child16">Parent/person responsible for child under 16</option>
+<option value="child20">Parent/person responsible for child under 20 in approved full-time education</option>
+<option value="other">None of the above</option>
+</select>
+
+<label>If close relative or close friend, is it reasonable for them to accept responsibility for funeral costs?</label>
+<select id="responsibility">
+<option value="">Select</option>
+<option value="yes">Yes</option>
+<option value="no">No</option>
+<option value="na">Not Applicable</option>
+</select>
+
+<label>Did the deceased have a prepaid funeral plan covering the funeral costs?</label>
+<select id="prepaid">
+<option value="">Select</option>
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Are funds available from the deceased person's estate?</label>
+<select id="estate">
+<option value="">Select</option>
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+</div>
+
+<div class="card">
+<h2>Eligibility Checks</h2>
+<div id="check1" class="check pending">Awaiting information</div>
+<div id="check2" class="check pending">Awaiting information</div>
+<div id="check3" class="check pending">Awaiting information</div>
+<div id="check4" class="check pending">Awaiting information</div>
+<div id="check5" class="check pending">Awaiting information</div>
+</div>
+</div>
+
+<div id="finalResult" class="pending">Complete the questions above.</div>
+
+<button onclick="generateSummary()">Generate Claimant Summary</button>
+<button onclick="copySummary()">Copy Summary</button>
+<button onclick="printSummary()">Print</button>
+<button onclick="downloadSummary()">Download TXT</button>
+
+<textarea id="summaryOutput" rows="12"></textarea>
+
+<div class="footer">
+Estate funds do not automatically prevent entitlement. Any available funds from the estate may reduce the amount awarded.
+</div>
+
+<script>
+function setCheck(id,status,text){
+ let box=document.getElementById(id);
+ box.className="check "+status;
+ box.innerHTML=(status==="pass"?"✔ ":status==="fail"?"✖ ":"")+text;
+}
+
+function evaluate(){
+ let eligible=true;
+ let months=document.getElementById("months").value;
+ let relationship=document.getElementById("relationship").value;
+ let responsibility=document.getElementById("responsibility").value;
+ let prepaid=document.getElementById("prepaid").value;
+ let estate=document.getElementById("estate").value;
+
+ if(months===""){setCheck("check1","pending","Claim time limit not completed");}
+ else if(months==="yes"){setCheck("check1","pass","Claim made within 6 months");}
+ else {setCheck("check1","fail","Claim not made within 6 months"); eligible=false;}
+
+ if(relationship===""){setCheck("check2","pending","Relationship not completed");}
+ else if(relationship==="other"){setCheck("check2","fail","Relationship requirement not met"); eligible=false;}
+ else {setCheck("check2","pass","Qualifying relationship identified");}
+
+ if(relationship==="relative" || relationship==="friend"){
+   if(responsibility==="yes"){setCheck("check3","pass","Responsibility test satisfied");}
+   else if(responsibility==="no"){setCheck("check3","fail","Responsibility test not satisfied"); eligible=false;}
+   else {setCheck("check3","pending","Responsibility test unanswered");}
+ } else {
+   setCheck("check3","pass","Responsibility test not required");
+ }
+
+ if(prepaid===""){setCheck("check4","pending","Prepaid funeral plan question unanswered");}
+ else if(prepaid==="yes"){setCheck("check4","fail","Costs already covered by prepaid funeral plan"); eligible=false;}
+ else {setCheck("check4","pass","No prepaid funeral plan covering costs");}
+
+ if(estate===""){setCheck("check5","pending","Estate information unanswered");}
+ else if(estate==="yes"){setCheck("check5","pass","Estate funds exist (award may be reduced)");}
+ else {setCheck("check5","pass","No estate funds identified");}
+
+ let final=document.getElementById("finalResult");
+ let responsibilityRequired=(relationship==="relative"||relationship==="friend");
+
+ if(months===""||relationship===""||prepaid===""||estate===""||(responsibilityRequired && responsibility==="")){
+   final.className="pending";
+   final.innerHTML="Please complete all required questions.";
+   return;
+ }
+
+ if(eligible){
+   final.className="green";
+   final.innerHTML="✅ POTENTIALLY ELIGIBLE FOR FUNERAL EXPENSES PAYMENT";
+ } else {
+   final.className="red";
+   final.innerHTML="❌ APPEARS NOT ELIGIBLE BASED ON INFORMATION PROVIDED";
+ }
+}
+
+function generateSummary(){
+ const box=document.getElementById("summaryOutput");
+ box.style.display="block";
+ box.value="Outcome:\n"+document.getElementById("finalResult").innerText+"\n\nGenerated: "+new Date().toLocaleString();
+}
+
+function copySummary(){navigator.clipboard.writeText(document.getElementById("summaryOutput").value);}
+function printSummary(){let w=window.open('');w.document.write('<pre>'+document.getElementById('summaryOutput').value+'</pre>');w.print();}
+function downloadSummary(){
+ const blob=new Blob([document.getElementById('summaryOutput').value],{type:'text/plain'});
+ const a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);
+ a.download='Funeral_Expenses_Payment_Summary.txt';
+ a.click();
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+ document.querySelectorAll("select").forEach(s=>s.addEventListener("change", evaluate));
+ evaluate();
+});
+</script>
+</body>
+</html>
